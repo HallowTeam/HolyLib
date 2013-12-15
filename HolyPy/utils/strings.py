@@ -18,6 +18,4 @@ def bytes_to_string(bytes_):
 ################################################################################
 
 if __name__ == '__main__':
-    import binascii as b
-    print bytes_to_string(string_to_bytes("AAAAA"))
     pass
