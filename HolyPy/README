@@ -1,0 +1,14 @@
+HolyPY
+======
+
+This repo contains the python library writen by the HallowTeam
+
+Norme
+=====
+- Nom de classes en camelCase
+- Nom de fonctions avec "_"
+- Nom de variables avec "_"
+
+Install
+=======
+sudo ln -s /Path/To/HolyPy /usr/lib/python2.7/site-packages/holypy
