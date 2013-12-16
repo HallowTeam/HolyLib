@@ -14,15 +14,21 @@ CHARSET = string.uppercase
 ################################################################################
 
 def format_key(key):
-    """Format <key> into a valid key"""
+    """
+    Retourne une clef valide pour un vigenere
+    """
     return [c for c in key.upper() if c in CHARSET]
 
 def format_text(text):
-    """Format <text> into a valid text"""
+    """
+    Retourne un texte valide pour un vigenere
+    """
     return text.upper()
 
 def encrypt(plain, key):
-    """Encrypt data with Vigenere algorithm"""
+    """
+    Chiffre @plain avec l'algorithme vigenere
+    """
     key    = format_key(key)
     count  = 0
     plain  = format_text(plain)
@@ -38,7 +44,9 @@ def encrypt(plain, key):
     return cipher
 
 def decrypt(cipher, key):
-    """Decrypt data with Vigenere algorithm"""
+    """
+    Dechiffre @plain avec l'algorithme vigenere
+    """
     key    = format_key(key)
     count  = 0
     plain  = ""
@@ -54,7 +62,9 @@ def decrypt(cipher, key):
     return plain
 
 def revert(cipher, plain):
-    """Find key with plaintext attack"""
+    """
+    Trouve la clef du vigenere a partir de @plain et @cipher
+    """
     key    = ""
     plain  = format_key(plain)
     cipher = format_key(cipher)

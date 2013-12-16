@@ -6,11 +6,15 @@
 ################################################################################
 
 def ceil_modulus(number, modulus = 2):
-    """Round number to the next modulus"""
+    """
+    Arrondi @number au multiple immediatement superieur de @modulus
+    """
     return number + (modulus - (number % modulus)) % modulus
 
 def floor_modulus(number, modulus = 2):
-    """Round number to the prev modulus"""
+    """
+    Arrondi @number au multiple immediatement inferieur de @modulus
+    """
     return number - number % modulus
 
 ################################################################################

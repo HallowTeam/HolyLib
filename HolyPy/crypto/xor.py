@@ -17,14 +17,20 @@ TEXT_CHARSET = set(string.printable) - set("\"#$%&*+/<=>@[\\]^`|~")
 ################################################################################
 
 def xor(plain, key):
-    """Xor string <plain> with string <key>"""
+    """
+    Xor @plain et @key
+    """
+    if isinstance(key, int):
+        return chr(ord(plain[0]) ^ key)
     cipher = ""
     for i, c in enumerate(plain):
         cipher += chr(ord(c) ^ ord(key[i % len(key)]))
     return cipher
 
 def brute(cipher, key_len, key_charset = KEY_CHARSET, text_charset = TEXT_CHARSET, verbose = True):
-    """Perform brute force to find the key"""
+    """
+    Effectue une attaque brute force sur @cipher
+    """
     chunks  = split(cipher, key_len)
     matches = []
     charset = set()
@@ -59,7 +65,9 @@ def brute(cipher, key_len, key_charset = KEY_CHARSET, text_charset = TEXT_CHARSE
     return success, matches, sorted(charset), sorted(ignored)
 
 def debug(success, matches, charset, ignored):
-    """Print report of the brute force attack"""
+    """
+    Affiche les informations retournee par une attaque brute force
+    """
     passwd = ""
     for chars in matches:
         if len(chars) == 1:

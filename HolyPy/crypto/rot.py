@@ -8,7 +8,10 @@ import string
 ################################################################################
 
 def rot(cipher, offset = None):
-    """Translate all chars of cipher"""
+    """
+    Decalle chaque caractere de @cipher de @offset
+    Si @offset n'est pas renseigne, @offset prendra toutes les valeurs possible
+    """
     if offset == None:
         results = []
         for i in xrange(1, 256):
@@ -18,7 +21,9 @@ def rot(cipher, offset = None):
         return rot_trans(cipher, offset)
 
 def rot_trans(cipher, offset):
-    """Translate all chars of cipher"""
+    """
+    Decalle chaque caractere de @cipher de @offset
+    """
     return "".join([chr((ord(c) + offset) % 256) for c in cipher])
 
 ################################################################################

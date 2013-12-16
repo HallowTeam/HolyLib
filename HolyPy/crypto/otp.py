@@ -8,7 +8,9 @@ import string
 ################################################################################
 
 def encrypt(plaintext, key, charset = string.uppercase):
-    """Encrypt data with OTP algorithm"""
+    """
+    Chiffre @plaintext avec l'algorithme OTP
+    """
     ciphertext = ""
     for c1, c2 in zip(plaintext, key):
         i1 = charset.index(c1)
@@ -17,7 +19,9 @@ def encrypt(plaintext, key, charset = string.uppercase):
     return ciphertext
 
 def decrypt(ciphertext, key, charset = string.uppercase):
-    """Decrypt data with OTP algorithm"""
+    """
+    Dechiffre @ciphertext avec l'algorithme OTP
+    """
     plaintext = ""
     for c1, c2 in zip(ciphertext, key):
         i1 = charset.index(c1)

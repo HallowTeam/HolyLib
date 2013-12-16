@@ -6,11 +6,16 @@
 ################################################################################
 
 def split(iter_, size = 2):
-    """Split <iter_> every <size> members"""
+    """
+    Divise @iter_ en blocks de @size membres
+    """
     return [iter_[i:i + size] for i in xrange(0, len(iter_), size)]
 
 def iterize(obj, type_ = None):
-    """Return <obj> if it's iterable or an iterable object containing <obj>"""
+    """
+    Retourne un objet @type_ contenant @obj si type(@obj) != type(@type_)
+    Sinon @obj
+    """
     if type_ == None:
         if isinstance(obj, list) or isinstance(obj, tuple):
             return obj

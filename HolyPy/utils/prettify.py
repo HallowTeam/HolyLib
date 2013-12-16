@@ -46,15 +46,25 @@ from   holypy.utils.iters import iterize
 ################################################################################
 
 def rgb(red, green, blue):
-    """Return RGB color. 0 <= R, G, B <= 5"""
+    """
+    Retourne la couleur RGB correspondante
+    0 <= R <= 5
+    0 <= G <= 5
+    0 <= B <= 5
+    """
     return 16 + (red * 36) + (green * 6) + blue
 
 def gray(value):
-    """Return gray color. 0 <= value <= 23"""
+    """
+    Retourne la couleur grise correspondante
+    0 <= value <= 23
+    """
     return 232 + value
 
 def prettify(text, foreground = None, background = None, attributes = (BOLD)):
-    """Format text"""
+    """
+    Format le texte avec les options renseignees
+    """
     output  = ""
     if foreground:
         output += "\x1B[38;5;%dm" % (foreground)

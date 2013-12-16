@@ -8,7 +8,10 @@ import string
 ################################################################################
 
 def caesar(cipher, offset = None):
-    """Apply caesar algorithm to the cipher"""
+    """
+    Effectue un decallage de Cesar sur @cipher avec un decallage de @offset
+    Si @offset n'est pas renseigne, @offset prendra toutes les valeurs possible
+    """
     if offset == None:
         results = []
         for i in xrange(1, len(string.lowercase)):
@@ -18,7 +21,9 @@ def caesar(cipher, offset = None):
         return caesar_trans(cipher, offset)
 
 def caesar_trans(cipher, offset):
-    """Apply caesar algorithm to the cipher"""
+    """
+    Effectue un decallage de Cesar sur @cipher avec un decallage de @offset
+    """
     text = ""
     for c in cipher:
         if c.islower():
