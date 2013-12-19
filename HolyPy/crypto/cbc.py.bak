@@ -1,0 +1,273 @@
+#!/usr/bin/python2
+# coding: utf-8
+
+from holypy.crypto.xor    import xor
+from holypy.utils.iters   import split
+from holypy.utils.convert import hex_to_string
+from holypy.utils.convert import string_to_hex
+
+################################################################################
+### Constants
+################################################################################
+"""
+iv = Init    Vector: vecteur initialisateur
+dv = Decoded Value : valeur  intermediaire
+ev = Encoded Value : valeur  encode
+"""
+
+CBC_ERROR = "Padding Error"
+
+################################################################################
+### Decryption Class
+################################################################################
+
+class CBCIterDecrypt():
+    def __init__(self, cipher, size):
+        self.dv      = []
+        self.dvs     = []
+        self.size    = size * 2
+        self.count   = -1
+        self.blocks  = split(cipher, self.size)
+
+    def __iter__(self):
+        self.dv    = []
+        self.dvs   = []
+        self.count = -1
+        return self
+
+    def next(self):
+        self.count += 1
+        if self.count > 0xFF:
+            raise StopIteration
+        return self.next_iv()
+
+    def next_iv(self):
+        """
+        Generation du prochain IV
+        """
+        iv  = ""
+        for byte in self.dv[::-1]:
+            iv += "%02X" % (byte ^ (len(self.dv) + 1))
+        iv  = "%02X" % (self.count) + iv
+        iv  = iv.rjust(self.size, "0")
+        iv += self.blocks[::-1][len(self.dvs)]
+        return iv
+
+    def success(self):
+        """
+        Validation du dernier IV
+        """
+        self.dv.append(self.count ^ (len(self.dv) + 1))
+        if len(self.dv) == self.size / 2:
+            self.dvs.append(self.dv)
+            self.dv = []
+        self.count = -1
+        if len(self.dvs) + 1 >= len(self.blocks):
+            self.count = 0xFF
+
+    def decrypt(self):
+        """
+        Dechiffrement du message
+        """
+        plain = ""
+        for i, dv in enumerate(self.dvs[::-1]):
+            plain += decrypt(self.blocks[i], dv[::-1])
+        return plain
+
+################################################################################
+### Encryption Class
+################################################################################
+
+class CBCIterEncrypt():
+    def __init__(self, plain, size, dv = None, ev = None):
+        self.dv     = []
+        self.dvs    = []
+        self.size   = size * 2
+        self.count  = -1
+        self.blocks = []
+        self.suffix = {"dv": None, "ev": None}
+        self.chunks = split(pad(plain, size), size)
+        if ev and dv:
+            self.suffix["dv"] = dv
+            self.suffix["ev"] = ev
+        elif ev:
+            self.suffix["ev"] = ev
+            self.suffix["dv"] = []
+        else:
+            self.suffix["ev"] = "0" * self.size
+            self.suffix["dv"] = []
+
+    def append_dv(self, dv):
+        print self.dvs
+        print self.dv
+        print self.chunks
+        self.blocks.append(encrypt(self.chunks[::-1][len(self.dvs)], dv[::-1]))
+        self.dvs.append(dv)
+        if len(self.dvs) >= len(self.chunks):
+            self.count = 0xFF
+        self.dv = []
+
+    def __iter__(self):
+        self.dv     = []
+        self.dvs    = []
+        self.count  = -1
+        self.blocks = []
+        self.blocks.append(self.suffix["ev"])
+        if self.suffix["dv"]:
+            self.append_dv(self.suffix["dv"])
+        return self
+
+    def next(self):
+        self.count += 1
+        if self.count > 0xFF:
+            raise StopIteration
+        return self.next_iv()
+
+    def next_iv(self):
+        """
+        Generation du prochain IV
+        """
+        iv  = ""
+        for byte in self.dv[::-1]:
+            iv += "%02X" % (byte ^ (len(self.dv) + 1))
+        iv  = "%02X" % (self.count) + iv
+        iv  = iv.rjust(self.size, "0")
+        # iv += self.blocks[::-1][len(self.dvs)]
+        iv += self.blocks[-1]
+        return iv
+
+    def success(self):
+        """
+        Validation du dernier IV
+        """
+        self.dv.append(self.count ^ (len(self.dv) + 1))
+        self.count = -1
+        if len(self.dv) == self.size / 2:
+            self.append_dv(self.dv)
+
+    def encrypt(self):
+        """
+        Chiffrement du message
+        """
+        return "".join(self.blocks[::-1])
+
+################################################################################
+### Methods
+################################################################################
+
+def decrypt(ev, dv):
+    """
+    Dechiffrement de @ev avec @dv
+    """
+    plain = ""
+    ev    = hex_to_string(ev)
+    for i, key in enumerate(dv):
+        plain += xor(ev[i], key)
+    return plain
+
+def encrypt(plain, dv):
+    """
+    Chiffrement de @plain avec @dv
+    """
+    cipher = ""
+    for i, key in enumerate(dv):
+        cipher += xor(plain[i], key)
+    return string_to_hex(cipher)
+
+def unpad(plain):
+    return plain[:-chr(plain[-1])]
+
+def pad(plain, size):
+    offset = size - (len(plain) % size)
+    return plain + chr(offset) * offset
+
+################################################################################
+### Module
+################################################################################
+
+if __name__ == '__main__':
+    import re
+    import requests
+    from holypy.crypto.xor import xor
+    from holypy.utils.convert import string_to_bytes
+
+    # size   = 16
+    # plain  = pad("./file", size)
+    dv     = [19, 206, 190, 28, 221, 179, 189, 159, 168, 30, 146, 243, 184, 92, 6, 45]
+    ev     = "2329B171B13735C51FD94B516649EAB2"
+    # # 03293AD19FF714A295B7B9D716B4C419 2329B171B13735C51FD94B516649EAB2
+
+    # dv = [239, 131, 49, 154, 165, 30, 63, 140, 11, 116, 169, 165, 177, 51, 113, 42]
+    # ev = "A" * 32
+    # # 045E55D8C9CC0724E45073C09E3587EB AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+
+    # print encrypt(pad("./home/files", 16), dv = dv[::-1])
+    # dec = CBCIterDecrypt(encrypt(pad("./home/files", 16), dv = dv[::-1]), 16)
+    # dec.dvs = [dv]
+    # print dec.decrypt()
+
+    dv = [239, 131, 49, 154, 165, 30, 63, 140, 11, 116, 169, 165, 177, 51, 113, 42]
+    ev = "A" * 32
+    # dv   = [17, 192, 206, 88, 181, 212, 147, 229, 170, 28, 100, 47, 186, 104, 66, 128][::-1]
+    # ev   = "4C7545EFA1AD85388BA8AC3B0F73D943"
+    enc  = CBCIterEncrypt("./files/home", 16, ev = ev, dv = dv)
+    for i in enc:
+        print i
+        response = requests.post("http://challenge01.root-me.org//realiste/ch12/index.aspx?c=%s" % i, cookies = {
+            "spip_session": "3892_1c56feb789b11961c75f4113be9c79cd",
+        })
+        if not re.search(CBC_ERROR, response.text):
+            enc.success()
+            print enc.dv
+            print enc.dvs
+    print enc.encrypt()
+
+    # [[190, 93, 89, 86, 1, 7, 205, 78, 202, 66, 144, 242, 98, 187, 123, 11]]
+    # 2554DD0B9EF531E526A26A64525D59BA00000000000000000000000000000000
+
+    # print encrypt("A" * 32, [239, 131, 49, 154, 165, 30, 63, 140, 11, 116, 169, 165, 177, 51, 113, 42][::-1]) + "A" * 32
+    # 045E55D8C9CC0724E45073C09E3587EBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+
+    # [[19, 206, 190, 28, 221, 179, 189, 159, 168, 30, 146, 243, 184, 92, 6, 45], [19, 206, 190, 28, 221, 179, 189, 159, 168, 30, 146, 243, 184, 92, 6, 45]]
+    # 3D164CA8E3820EB88FADA3CD0CAEDE0303293AD19FF76D87FEDFDCA8689EBB602329B171B13735C51FD94B516649EAB2
+
+
+    # dvs = [[19, 206, 190, 28, 221, 179, 189, 159, 168, 30, 146, 243, 184, 92, 6, 45], [19, 206, 190, 28, 221, 179, 189, 159, 168, 30, 146, 243, 184, 92, 6, 45]]
+    # # 03293AD19FF76D87FEDFDCA8689EBB603D164CA8E3820EB88FADA3CD0CAEDE032329B171B13735C51FD94B516649EAB2
+    # print encrypt(pad("", 16), dvs[-1][::-1])
+
+
+    # [[19, 206, 190, 28, 221, 179, 189, 159, 168, 30, 146, 243, 184, 92, 6, 45], [109, 230, 234, 245, 252, 75, 82, 58, 230, 116, 146, 16, 20, 137, 34, 111]]
+    # 410DEF7D7CF707C95B30248981CA931E3D164CA8E3820EB88FADA3CD0CAEDE032329B171B13735C51FD94B516649EAB2
+
+    # TODO: ne plus inverser
+    # TODO: faire que ca fonctionne
+    # dvs = [[19, 206, 190, 28, 221, 179, 189, 159, 168, 30, 146, 243, 184, 92, 6, 45], [109, 230, 234, 245, 252, 75, 82, 58, 230, 116, 146, 16, 20, 137, 34, 111]]
+    # cipher = "410DEF7D7CF707C95B30248981CA931E3D164CA8E3820EB88FADA3CD0CAEDE032329B171B13735C51FD94B516649EAB2"
+    # cbc = CBCIterEncrypt(cipher, 16)
+    # cbc.dvs = dvs
+    # print cbc.encrypt()
+
+    # cbc = CBCIterDecrypt("2554DD0B9EF531E526A26A64525D59BA00000000000000000000000000000000", 16)
+    # for i in cbc:
+    #     response = requests.post("http://challenge01.root-me.org//realiste/ch12/index.aspx?c=%s" % i, cookies = {
+    #         "spip_session": "3892_1c56feb789b11961c75f4113be9c79cd",
+    #     })
+    #     if not re.search(CBC_ERROR, response.text):
+    #         cbc.success()
+    #         print cbc.dv
+    #         print cbc.dvs
+    # print cbc.decrypt()
+
+    # cbc = CBCIterDecrypt(("3FEFA831D9B1E0CAC6750A44C96B41834C7545EFA1AD85388BA8AC3B0F73D943"), 16)
+    # for i in cbc:
+    #     # i = string_to_hex(i)
+    #     print i
+    #     response = requests.post("http://challenge01.root-me.org//realiste/ch12/index.aspx?c=%s" % i, cookies = {
+    #         "spip_session": "3892_1c56feb789b11961c75f4113be9c79cd",
+    #     })
+    #     if not re.search(CBC_ERROR, response.text):
+    #         cbc.success()
+    #         print cbc.dv
+    #         print cbc.dvs
+    # print cbc.decrypt()

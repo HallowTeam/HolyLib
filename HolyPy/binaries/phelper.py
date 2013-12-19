@@ -44,6 +44,12 @@ def sendline(line, process, EOF = True):
         process.send("".join(map(lambda x: "\x16" + x, line)))
     process.logfile = sys.stdout
 
+def output(cmd):
+    process = pexpect.spawn(cmd)
+    process.logfile = None
+    process.expect(pexpect.EOF)
+    return process.before
+
 ################################################################################
 ### Module
 ################################################################################

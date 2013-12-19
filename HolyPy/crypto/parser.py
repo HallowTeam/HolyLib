@@ -2,7 +2,6 @@
 # coding: utf-8
 
 import re
-from   holypy.utils.convert import hex_to_string
 
 ################################################################################
 ### Class
@@ -95,7 +94,7 @@ class Parser():
     def _formatAscii(self, data, size):
       if endian == True:
         data = self.toggleEndian(data)
-      return hex_to_string(data)
+      return data.decode("hex")
     return _formatAscii
 
 ################################################################################

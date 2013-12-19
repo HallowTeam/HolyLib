@@ -38,24 +38,6 @@ def bytes_to_string(bytes_):
     """
     return "".join(map(lambda x: chr(int(x[2:4], 16)), split(bytes_, 4)))
 
-def hex_to_string(hex_):
-    """
-    Converti @hex_ en chaine ascii
-    """
-    string = ""
-    for byte in split(hex_):
-        string += chr(int(byte, 16))
-    return string
-
-def string_to_hex(string_):
-    """
-    Converti @string en hexadecimal
-    """
-    hex_ = ""
-    for c in string_:
-        hex_ += "%02X" % ord(c)
-    return hex_
-
 ################################################################################
 ### Module
 ################################################################################
