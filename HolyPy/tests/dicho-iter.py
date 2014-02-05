@@ -3,18 +3,24 @@
 
 import string
 
-from holypy.crypto.dicho import DichoIter
+from holypy.crypto.dicho import *
 
-passwd = "b0nj0ur l3s 4mis !!!"
-dicho  = DichoIter(charset = string.printable)
+passwd = "b0nj0ur ! l3s 4mis !!! C0c0r1c4!!!!!!!"
+dicho  = DichoIter(MODE_LTE, charset = set(string.printable))
 
+i = 0
 for text in dicho:
-    print text
-    if passwd == text:
-        dicho.eq()
+    print i, text
+
+    i += 1
+    if i == -1:
         break
-    elif passwd >= text:
-        dicho.gte()
-    else:
-        dicho.lt()
-print "[+]", text
+
+    if passwd == text:
+        dicho.eq(True)
+    elif passwd <= text:
+        dicho.lte()
+    elif passwd > text:
+        dicho.gt()
+
+print "[+] Plain:", dicho.text
