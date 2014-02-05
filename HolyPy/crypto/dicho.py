@@ -109,10 +109,12 @@ class DichoIter(object):
                 # print "[*] MODE_GTE: LT: [0]"
                 self.char = self.charset[0]
             elif self.mode == MODE_GTE and not lt:
+                # print "[!] You Need Me !"
                 exit(0)
                 # print "[*] MODE_GT: GT: [1]"
                 # self.char = self.charset[1]
             elif self.mode == MODE_LTE and lt:
+                # print "[!] You Need Me !"
                 exit(0)
                 # print "[*] MODE_LTE: LT: [1]"
                 # self.char = self.charset[1]
