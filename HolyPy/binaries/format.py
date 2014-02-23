@@ -1,90 +1,84 @@
-# #!/usr/bin/python2
-# # coding: utf-8
+#!/usr/bin/python2
+# coding: utf-8
 
-# from   binascii              import hexlify
-# from   holypy.utils.iters    import split
-# from   holypy.utils.prettify import prettify, RED
-# from   holypy.utils.strings  import string_to_bytes
+# TODO: Handle Text (see previous version)
+# TODO: Handle Offset
+# TODO: Handle Invalid Charset
+# TODO: Handle Clever Relocation
+# TODO: Handle Multiple Address/Value
 
-# ################################################################################
-# ### Constants
-# ################################################################################
+import holypy.utils.memory      as memory
+from   holypy.utils.convert     import int_to_string, string_to_int, string_to_bytes
+from   holypy.utils.iters       import split
+from   holypy.utils.prettify    import perror
 
-# SIZE_32   = 4
-# SIZE_64   = 8
-# MODIFIERS = {
-#   1: "hh",
-#   2: "h",
-#   4: "",
-#   8: "l",
-# }
+################################################################################
+### Constants
+################################################################################
 
-# ################################################################################
-# ### Methods
-# ################################################################################
+SIZE      = {
+    32: {"i": 4, "s": "I"},
+    64: {"i": 8, "s": "Q"},
+}
+MODIFIERS = {
+    1: "hh",
+    2: "h",
+    4: "",
+    8: "l",
+}
 
-# def payload(addr, value, index, size = SIZE_32, chunk_size = 2, reverse = True, copy = False):
-#     chunks  = create_chunks(addr, value, size, chunk_size, reverse)
-#     counter = 0
-#     payload = ""
-#     for i, chunk in enumerate(chunks):
-#         temp           = "".join(map(lambda x: chr(int(x, 16)), chunk["addr"]))
-#         payload        += string_to_bytes(temp) if copy else temp
-#         counter        += size
-#         chunk["index"] = i
-#     for i, chunk in enumerate(chunks):
-#         addr_  = chunk["addr"]
-#         value_ = chunk["value"]
-#         index_ = chunk["index"]
-#         offset = value_ - counter
-#         if offset > 0:
-#             payload += "%%%dc" % (offset)
-#         elif offset < 0:
-#             print prettify("[-] Format offset", RED)
-#             return -1
-#         payload += "%%%d$%sn" % (index + index_, MODIFIERS[chunk_size])
-#         counter += offset
-#     return payload
+################################################################################
+### Methods
+################################################################################
 
+def generate(address, value, index, bits = 32, size = 2, endian = True, raw = True):
+    """
+    Generation d'un payload format string
+    """
+    if not bits in SIZE.keys():
+        perror("[-] Format: @bits must be either 32 or 64")
+        return ""
+    if not size in MODIFIERS.keys():
+        perror("[-] Format: @size must be either 1, 2, 4 or 8")
+        return ""
+    if size > SIZE[bits]["i"]:
+        perror("[-] Format: @size must be lower than @bits")
+        return ""
+    count   = 0
+    chunks  = _split(address, value, bits, size, endian)
+    payload = ""
+    for i, chunk in enumerate(chunks):
+        payload   += string_to_bytes(chunk["a"]) if not raw else chunk["a"]
+        count     += SIZE[bits]["i"]
+        chunk["i"] = i
+    for i, chunk in enumerate(chunks):
+        offset = string_to_int(chunk["v"]) - count
+        if offset > 0:
+            payload += "%%%dc" % offset
+        elif offset < 0:
+            perror("[-] Format: invalid offset")
+            return
+        payload += "%%%d$%sn" % (index + chunk["i"], MODIFIERS[size])
+        count   += offset
+    return payload
 
-# def create_chunks(addr, value, size, chunk_size, reverse):
-#     if isinstance(value, int):
-#         length = size
-#     addrs  = []
-#     chunks = split_bytes(format_bytes(value, length, reverse), chunk_size, reverse)
-#     for i, chunk in enumerate(chunks):
-#         temp = addr + chunk_size * 2 * i
-#         temp = split_bytes(format_bytes(temp, size, reverse), 1, reverse)
-#         addrs.append({
-#             "addr"  : temp,
-#             "value" : int(chunk, 16),
-#             "index" : -1
-#         })
-#     addrs.sort(key = lambda x: x["value"])
-#     return addrs
+def _split(address, value, bits, size, endian):
+    """
+    Creation des differentes partie du payload
+    """
+    parts = []
+    value = _format(value, bits, endian)
+    for i, v in enumerate(split(value, size)):
+        parts.append({
+            "a": _format(address + i * size, bits, endian),
+            "v": v[::-1] if endian else v,
+            "i": -1,
+        })
+    return sorted(parts, key = lambda x: x["v"])
 
-# def format_bytes(value, size, reverse):
-#     if isinstance(value, int):
-#         value = "%x" % value
-#     return value.rjust(size * 2, "0")
-
-# def split_bytes(bytes_, size, reverse):
-#     return endian(split(bytes_, size * 2), reverse)
-
-# def endian(iter_, reverse):
-#     return iter_[::-1] if reverse else iter_
-
-# ################################################################################
-# ### Module
-# ################################################################################
-
-# if __name__ == '__main__':
-#     index   = 0
-#     size    = SIZE_32
-#     chunk   = 2
-#     copy    = True
-#     endian_ = False
-#     print payload(0x41424344, 0x12345,   index, reverse = endian_, size = size, chunk_size = chunk, copy = copy)
-#     print payload(0x4142434, 0x12345678, index, reverse = endian_, size = size, chunk_size = chunk, copy = copy)
-
-print prettify("DO NOT USE THIS, USE THE ONE FROM THE PREVIOUS LIBRARY !", RED)
+def _format(value, bits, endian):
+    """
+    Formate @value pour etre ecrit en memoire
+    """
+    value = memory.endian(value, SIZE[bits]["s"]) if endian else value
+    return int_to_string(value).rjust(SIZE[bits]["i"], "\x00")

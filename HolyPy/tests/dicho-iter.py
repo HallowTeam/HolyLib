@@ -5,7 +5,7 @@ import string
 
 from holypy.crypto.dicho import *
 
-passwd = "b0nj0ur ! l3s 4mis !!! C0c0r1c4!!!!!!!"
+passwd = "b_0n_j0ur _ ! l3s 4mis !!! C0c0r1c4!!!!!!!"
 dicho  = DichoIter(MODE_LTE, charset = set(string.printable))
 
 i = 0

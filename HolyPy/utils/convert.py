@@ -38,6 +38,25 @@ def bytes_to_string(bytes_):
     """
     return "".join(map(lambda x: chr(int(x[2:4], 16)), split(bytes_, 4)))
 
+def int_to_string(int_):
+    """
+    Convertion d'un entier en chaine de caractere
+    """
+    string = ""
+    for byte in split(hex(int_)[2:].strip("L")):
+        string += chr(int(byte, 16))
+    return string
+
+def string_to_int(str_):
+    """
+    Convertion d'une chaine de caractere en entier
+    """
+    value = 0
+    for i, c in enumerate(str_):
+        value <<= 8
+        value  += ord(c)
+    return value
+
 ################################################################################
 ### Module
 ################################################################################
