@@ -2,7 +2,7 @@
 # coding: utf-8
 # source: https://gist.github.com/christian-oudard/220521
 
-from holypy.core.iterator import iterize
+from holypy.core.iter import iterize
 
 ################################################################################
 ### Constants

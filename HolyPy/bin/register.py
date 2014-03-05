@@ -10,6 +10,10 @@ from holypy.core.memory import zsetb, zsetw, zsetd, zsetq
 # Pour Ufox, l'homme qui fait trembler les kernels !
 
 class ZRegister(object):
+    """
+    Emulation d'un registre CPU
+    rzx | ezx | zx | zh |zl
+    """
     @property
     def zl(self): return zgetb(self._val, 1, 0)
 
