@@ -15,3 +15,11 @@ sudo ln -s /Path/To/HolyPy /usr/lib/python2.7/site-packages/holypy
 
 Dependances
 ===========
+
+Todo:
+=====
+- Finir format.py
+- Remplacer header.py par objdump et nm ;)
+- Ajouter les descriptions
+- Fonction registres et decallage (ror et autre)
+- Reecrire la librairie au propre avec des exception et une base solide
