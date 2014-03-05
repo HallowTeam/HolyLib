@@ -1,7 +1,8 @@
 #!/usr/bin/python2
 # coding: utf-8
 
-from holypy.core.memory import zgetb, zsetb
+from holypy.core.memory import zgetb, zgetw, zgetd, zgetq
+from holypy.core.memory import zsetb, zsetw, zsetd, zsetq
 
 ################################################################################
 ### Classe ZRegister
