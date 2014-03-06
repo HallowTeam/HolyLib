@@ -19,6 +19,10 @@ def iterize(obj):
         obj = [obj]
     return obj
 
+def getitem(obj, i):
+    """Retourne l'item a l'index @i % len(@obj)"""
+    return obj[i % len(obj)]
+
 ################################################################################
 ### Module
 ################################################################################
