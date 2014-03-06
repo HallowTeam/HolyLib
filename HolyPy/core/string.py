@@ -1,7 +1,9 @@
 #!/usr/bin/python2
 # coding: utf-8
 
-from holypy.core.math import rceil
+from __future__         import absolute_import
+from string             import lowercase, uppercase
+from holypy.core.math   import rceil
 
 ################################################################################
 ### Methodes
@@ -16,6 +18,14 @@ def pad(string, c, chunksize, ltr):
 
 def lpad(string, c, chunksize): return pad(string, c, chunksize, True)
 def rpad(string, c, chunksize): return pad(string, c, chunksize, False)
+
+def alphacharset(c):
+    """Retourne l'alphabet de la lettre @c"""
+    return lowercase if c.islower() else uppercase
+
+def alphaindex(c):
+    """Retourne l'index de la lettre @c dans l'alphabet"""
+    return alphacharset(c).index(c)
 
 ################################################################################
 ### Module

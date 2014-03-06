@@ -5,25 +5,12 @@
 ### Methods
 ################################################################################
 
-def itos(i, ltr = True):
-    """int to string"""
-    s = ""
-    while i != 0:
-        s += chr(i & 0xff)
-        i  = (i >> 8)
-    return s[::-1] if ltr else s
-
-def stoi(s, ltr = False):
-    """string to int"""
-    i = 0
-    for c in s[::-1] if ltr else s:
-        i <<= 8
-        i  += ord(c)
-    return i
+class Parser(object):
+    pass
 
 ################################################################################
 ### Module
 ################################################################################
 
 if __name__ == '__main__':
-  pass
+    pass

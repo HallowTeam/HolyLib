@@ -2,7 +2,9 @@
 # coding: utf-8
 # Source: https://wiki.python.org/moin/BitManipulation
 
-import struct
+from struct                     import pack, unpack
+from holypy.core.iter           import getitem
+from holypy.core.convert        import itos
 
 ################################################################################
 ### Constantes
@@ -158,6 +160,12 @@ def ror(val, size, off = 1):
 def rol(val, size, off = 1):
     """Fonction asm rol"""
     return fit(zsetu(fit(val, size) << off, zgetu(val, off, size - off), off, 0), size)
+
+def xor(text, key):
+    """Fonction asm xor"""
+    if isinstance(key, int):
+        key = itos(key)
+    return "".join([chr(ord(c) ^ ord(getitem(key, i))) for i, c in enumerate(text)])
 
 ################################################################################
 ### Module
