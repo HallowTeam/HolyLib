@@ -43,10 +43,10 @@ class CBCEncrypt(object):
 
     def run(self):
         """Chiffrement du message"""
-        self.init()
-        self.count = -1
         if len(self.dvs) >= len(self.chunks):
             return True
+        self.init()
+        self.count = -1
         while self.next():
             if self.fn(self.vector()):
                 if self.success():
@@ -114,6 +114,8 @@ class CBCDecrypt(object):
 
     def run(self):
         """Dechiffrement du message"""
+        if len(self.dvs) + 1 >= len(self.chunks):
+            return True
         self.count = -1
         while self.next():
             if self.fn(self.vector()):
