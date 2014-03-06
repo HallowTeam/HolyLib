@@ -9,10 +9,22 @@ from holypy.core.iter   import getitem
 ################################################################################
 
 def encrypt(plain, key, charset = uppercase):
-    pass
+    """Chiffrement"""
+    cipher = ""
+    for c1, c2 in zip(plain, key):
+        i1      = charset.index(c1)
+        i2      = charset.index(c2)
+        cipher += getitem(charset, i1 + i2)
+    return cipher
 
-def decrypt(plain, key, charset = uppercase):
-    pass
+def decrypt(cipher, key, charset = uppercase):
+    """Dechiffrement"""
+    plain = ""
+    for c1, c2 in zip(cipher, key):
+        i1     = charset.index(c1)
+        i2     = charset.index(c2)
+        plain += getitem(charset, i1 - i2)
+    return plain
 
 ################################################################################
 ### Module
