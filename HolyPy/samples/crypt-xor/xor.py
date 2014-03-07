@@ -6,25 +6,59 @@ from holypy.core.memory import *
 from holypy.crypt.xor   import *
 from holypy.core.iter   import *
 
-txt = "BONJOUR LES AMIS COMMENT ALLER vous. je pense que vous n'etes pas tres tres bien.... peut mieur faire revenez a 10h20."
-cip = xor(txt, key)
+txt     = "BONJOUR LES AMIS COMMENT ALLER vous. je pense que vous n'etes pas tres tres bien.... peut mieur faire revenez a 10h20. ah oui le fflag est POMPOMPELOPE"
+cipher  = xor(txt, key)
 
-data = analyze(cip, len(key), txtset = TXTSET - set("KXZQ"),  idxban = {
-    # 0: ["E"],
-}, idxset = {
-    9: ["S"],
-    # 12: ["I"],
-})
-
-report(*data, idx = 9)
+breaker = Xor(cipher)
+breaker.analyze_length()
+breaker.analyze(13)
 print
-guess(*data, hint = "vous", cipher = cip)
+breaker.report()
+print
+breaker.report_index(0)
+print
+breaker.report_plain()
 
+# On guess que la clef est de 14
+breaker.analyze(14)
+print
+breaker.report()
+print
+breaker.report_index(0)
+print
+breaker.report_plain()
+print
 
+# On devine "flag"
+breaker.analyze_plain("flag")
 
+# On relance avec les bons chars
+breaker.analyze(14, filters = {
+    4: {"charset": ["O"]},
+    5: {"charset": ["U"]},
+    6: {"charset": ["R"]},
+    7: {"charset": ["L"]},
+})
+print
+breaker.report()
+print
+breaker.report_plain()
 
-# for i, matchset in enumerate(matches):
-#     if len(matchset) == 1:
-#         print "[%d]" % i, fmt(sorted([x["key"] for x in matchset]), BLUE)
-#     else:
-#         print "[%d]" % i, fmt(sorted([x["key"] for x in matchset]), WHITE)
+# Un espace apres "flag"
+print
+breaker.report_index(8)
+
+# Seul le "E" convient
+breaker.analyze(14, filters = {
+    4: {"charset": ["O"]},
+    5: {"charset": ["U"]},
+    6: {"charset": ["R"]},
+    7: {"charset": ["L"]},
+    8: {"charset": ["E"]},
+})
+print
+breaker.report()
+print
+breaker.report_plain()
+
+# ...

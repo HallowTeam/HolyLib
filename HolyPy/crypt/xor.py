@@ -3,7 +3,8 @@
 
 import string
 
-from holypy.core.iter   import split
+from math               import ceil
+from holypy.core.iter   import split, getitem
 from holypy.core.memory import xor
 from holypy.core.output import *
 
@@ -11,158 +12,207 @@ from holypy.core.output import *
 ### Constantes
 ################################################################################
 
-KEYSET = set(string.letters + string.digits + "_")
-TXTSET = set(string.letters + string.digits + "_ ',.!")
+KEYSET  = set(string.letters + string.digits + "_")
+TEXTSET = set(string.letters + string.digits + "_ ',.!")
 
 ################################################################################
-### Methodes
+### Class
 ################################################################################
 
-# def analyze(cipher, keylen, keyset = KEYSET, txtset = TXTSET, idxban = None, idxset = None):
-#     """Recherche une clef probable"""
-#     missing = -1
-#     chunks  = split(cipher, keylen)
-#     charset = set()
-#     ignored = set()
-#     matches = [[] for i in xrange(keylen)]
-#     for i in xrange(keylen):
-#         for k in keyset:
-#             if not (idxset and i in idxset.keys()) or k in idxset[i]:
-#                 if not (idxban and i in idxban.keys() and k in idxban[i]):
-#                     success  = False
-#                     ichars   = []
-#                     icharset = set()
-#                     for chunk in chunks:
-#                         if i >= len(chunk):
-#                             break
-#                         success = True
-#                         c = xor(chunk[i], k)
-#                         if not c in txtset:
-#                             ignored |= set(c)
-#                             success  = False
-#                             break
-#                         icharset |= set(c)
-#                         ichars.append(c)
-#                     if success:
-#                         charset |= icharset
-#                         matches[i].append({
-#                             "key"    : k,
-#                             "chars"  : ichars,
-#                             "charset": icharset,
-#                         })
-#         if len(matches[i]) == 0:
-#             missing = i
-#             break
-#     return (matches, charset, ignored, missing)
+class Xor(object):
+    def __init__(self, cipher, keyset = KEYSET, textset = TEXTSET):
+        self.errno   = 0
+        self.cipher  = cipher
+        self.keyset  = keyset
+        self.textset = textset
 
-# def report(matches, charset, ignored, missing, idx = None):
-#     """Affiche le bilan de l'analyze"""
-#     if missing != -1:
-#         print fmt("[-] Xor: failure at index %d" % missing, RED)
-#     else:
-#         print fmt("[+] Xor: success", GREEN)
-#     _report_guess(matches)
-#     _report_infos(charset, ignored)
-#     if idx != None:
-#         _report_index(matches, idx)
+    def analyze(self, keylen, filters = None):
+        """
+        Analyze du xor pour une clef de longueur @keylen
 
-# def guess(matches, charset, ignored, missing, hint = None):
-#     if hint != None:
-#         matches = _guess_with_hint(matches, hint)
-#     plain   = ""
-#     guesses = []
-#     for matchset in matches:
-#         if len(matchset) != 0:
-#             guess = [[-1, False] for i in xrange(len(matches[0][0]["chars"]))]
-#             for match in matchset:
-#                 for i, c in enumerate(match["chars"]):
-#                     if guess[i][0] == None:
-#                         break
-#                     elif guess[i][0] == -1:
-#                         guess[i][0] = c
-#                     elif guess[i][0] != c:
-#                         if guess[i][0].lower() == c.lower():
-#                             guess[i][1] = True
-#                         else:
-#                             guess[i][0] = None
-#             guesses.append(guess)
-#     for i in xrange(len(guesses)):
-#         for charset in guesses:
-#             if i < len(charset):
-#                 c    = charset[i][0]
-#                 case = charset[i][1]
-#                 if c == -1:
-#                     pass
-#                 elif c == None:
-#                     plain += fmt("?", WHITE)
-#                 else:
-#                     if case == False:
-#                         plain += fmt(c, BLUE)
-#                     else:
-#                         plain += fmt(c, YELLOW)
-#     print "[+] " + plain
+        @filters = dict[index]{
+            "charset": [], # Charset autorise pour l'index
+            "exclude": [], # Lettres non autorise pour l'index
+        }
+        """
+        self.errno   = -1
+        self.keylen  = keylen
+        self.chunks  = split(self.cipher, self.keylen)
+        self.charset = set()
+        self.ignores = set()
+        self.matches = [{} for i in xrange(self.keylen)]
+        for i in xrange(self.keylen):
+            for k in self.keyset:
+                if not self.skip(i, k, filters):
+                    match   = False
+                    chars   = []
+                    charset = set()
+                    for chunk in self.chunks:
+                        if i >= len(chunk):
+                            break
+                        c = xor(chunk[i], k)
+                        if not c in self.textset:
+                            match         = False
+                            self.ignores |= set(c)
+                            break
+                        match    = True
+                        charset |= set(c)
+                        chars.append(c)
+                    if match:
+                        self.charset      |= charset
+                        self.matches[i][k] = {
+                            "chars"   : chars,
+                            "charset" : charset,
+                        }
+            if len(self.matches[i]) == 0:
+                self.errno = i
+                break
 
-# def _guess_with_hint(cipher, matches, hint = ""):
-#     key   = []
-#     index = -1
-#     for i in xrange(len(cipher)):
-#         success  = False
-#         matchset = getitem(matches, i)
-#         for k in sorted([x["key"] for x in matchset]):
-#             char = xor(cipher[i], k)
-#             if index == -1 and char in pattern:
-#                 success = True
-#                 index   = pattern.index(char)
-#                 key.append(k)
-#                 break
-#             elif index != -1 and char == getitem(pattern, index + 1):
-#                 success = True
-#                 index  += 1
-#                 key.append(k)
-#                 break
-#         if success == False:
-#             index = -1
-#             key   = []
-#         elif len(key) == len(pattern):
-#             offset = ((i + 1) - len(pattern)) % len(matches)
-#             for i, matchset in enumerate(matches):
-#                 if i in xrange(offset, offset + len(pattern)):
-#                     matchset = [key[i - offset]]
-#             break
-#     return matches
+    def analyze_plain(self, plain, start = 0):
+        """Devine une partie de la clef grace @plain"""
+        i     = start
+        key   = []
+        index = 0
+        while i < len(self.cipher):
+            success  = False
+            matchset = getitem(self.matches, i)
+            for k, data in matchset.items():
+                char = xor(self.cipher[i], k)
+                if char == plain[index]:
+                    key.append(k)
+                    success = True
+                    index  += 1
+                    break
+            if success == False:
+                i    -= index
+                index = 0
+                key   = []
+            elif len(key) == len(plain):
+                break
+            i += 1
+        offset = i % self.keylen - len(key)
+        for x in xrange(len(key)):
+            offset += 1
+            offset  = offset if offset >= 0 else self.keylen + offset
+            offset  = offset % self.keylen
+            print "[%02d]" % offset, fmt("['%c']" % key[x], WHITE),
+        print
+        if i != len(self.cipher):
+            self.analyze_plain(plain, i + 1)
 
-# def _report_guess(matches):
-#     guess = ""
-#     for matchset in matches:
-#         if len(matchset) == 1:
-#             guess += fmt(matchset[0]["key"], BLUE)
-#         else:
-#             guess += fmt("?", WHITE)
-#     print "[*] " + guess
-#     print
-#     for i, matchset in enumerate(matches):
-#         if len(matchset) == 1:
-#             print "[%d]" % i, fmt(sorted([x["key"] for x in matchset]), BLUE)
-#         else:
-#             print "[%d]" % i, fmt(sorted([x["key"] for x in matchset]), WHITE)
+    def analyze_length(self, limit = 30, filters = None):
+        """Trouve toutes les longueur de clef possibles"""
+        for i in xrange(1, min(limit, len(self.cipher))):
+            self.analyze(i, filters)
+            if self.errno == -1:
+                print "%02d" % i,
+                self.report_key()
 
-# def _report_index(matches, index):
-#     for infos in matches[index]:
-#         print
-#         print fmt("[%c]" % infos["key"], MAGENTA)
-#         print fmt(sorted([x for x in infos["charset"]]), WHITE)
+    def skip(self, i, k, filters):
+        if not filters or not i in filters.keys():
+            return False
+        if "charset" in filters[i].keys():
+            return not k in filters[i]["charset"]
+        if "exclude" in filters[i].keys():
+            return k in filters[i]["exclude"]
 
-# def _report_infos(charset, ignored):
-#     print
-#     print fmt("[charset]", MAGENTA)
-#     print fmt(sorted([x for x in charset]), WHITE)
-#     print
-#     print fmt("[ignored]", MAGENTA)
-#     print fmt(sorted([x for x in ignored]), WHITE)
+    def report(self):
+        """Affiche un bilan de la derniere analyze"""
+        self.report_status()
+        print
+        self.report_charset()
+        print
+        self.report_key()
+        print
+        self.report_keyset()
 
-# ################################################################################
-# ### Module
-# ################################################################################
+    def report_status(self):
+        """Affiche le statut de la derniere analyze"""
+        if self.errno != -1:
+            print fmt("[-] Xor: failure at index %d" % self.errno, RED)
+        else:
+            print fmt("[+] Xor: success", GREEN)
 
-# if __name__ == '__main__':
-#     pass
+    def report_charset(self):
+        """Affiche les differentes charset"""
+        print fmt("[charset]", MAGENTA)
+        print fmt(sorted([x for x in self.charset]), WHITE)
+        print
+        print fmt("[ignores]", MAGENTA)
+        print fmt(sorted([x for x in self.ignores]), WHITE)
+
+    def report_key(self):
+        """Affiche la clef"""
+        key = ""
+        for matchset in self.matches:
+            if len(matchset) == 0:
+                continue
+            if len(matchset) == 1:
+                k, data = matchset.items()[0]
+                key += fmt(k, BLUE)
+            else:
+                key += fmt("?", WHITE)
+        print "[*] %s" % key
+
+    def report_keyset(self):
+        """Affiche les caracteres possible pour la clef"""
+        for i, matchset in enumerate(self.matches):
+            if len(matchset) == 1:
+                print "[%02d]" % i, fmt(sorted([k for k, data in matchset.items()]), BLUE)
+            elif len(matchset) != 0:
+                print "[%02d]" % i, fmt(sorted([k for k, data in matchset.items()]), WHITE)
+            else:
+                print "[%02d]" % i, fmt("[X]", RED)
+
+    def report_index(self, index):
+        """Affiche des information sur @index"""
+        i = 0
+        for k, data in self.matches[index].items():
+            if i != 0:
+                print
+            print fmt("['%c': charset - chars]" % k, MAGENTA)
+            print fmt(sorted([x for x in data["charset"]]), WHITE)
+            print fmt(data["chars"], WHITE)
+            i = 1
+
+    def report_plain(self):
+        """Affiche le plaintext"""
+        plain   = ""
+        guesses = [[] for i in xrange(self.keylen)]
+        for i, matchset in enumerate(self.matches):
+            charslen   = int(ceil(len(self.cipher) / float(self.keylen)))
+            guesses[i] = [[-1, False] for x in xrange(charslen)]
+            if len(matchset) == 0:
+                continue
+            for k, data in matchset.items():
+                for x, c in enumerate(data["chars"]):
+                    if guesses[i][x][0] == None:
+                        break
+                    elif guesses[i][x][0] == -1:
+                        guesses[i][x][0] = c
+                    elif guesses[i][x][0] != c:
+                        if guesses[i][x][0].lower() == c.lower():
+                            guesses[i][x][1] = True
+                        else:
+                            guesses[i][x][0] = None
+        for i in xrange(self.keylen):
+            for data in guesses:
+                if i < len(data):
+                    char = data[i][0]
+                    case = data[i][1]
+                    if char == -1:
+                        plain += fmt("X", MAGENTA)
+                    elif char == None:
+                        plain += fmt("?", WHITE)
+                    elif case == False:
+                        plain += fmt(char, BLUE)
+                    else:
+                        plain += fmt(char, YELLOW)
+        print "[*] %s" % plain
+
+################################################################################
+### Module
+################################################################################
+
+if __name__ == '__main__':
+    pass
