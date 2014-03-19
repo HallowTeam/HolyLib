@@ -16,12 +16,21 @@ WORD  = 16
 DWORD = 32
 QWORD = 64
 
-SIZE_REPR = {
+SIZE_REPRS = {
     BYTE  : "B",
     WORD  : "H",
     DWORD : "I",
     QWORD : "Q",
 }
+
+SIZE_BYTES = {
+    BYTE  : 1,
+    WORD  : 2,
+    DWORD : 4,
+    QWORD : 8,
+}
+
+ARCHITECTURES = [32, 64]
 
 ################################################################################
 ### Methodes masques
@@ -126,10 +135,10 @@ def zsetq(val, x, n, off): return zset(val, x, n, QWORD, off, QWORD)
 def endian(val, size = DWORD):
     """Modifie l'endian de @val"""
     if isinstance(size, int):
-        size = SIZE_REPR[size]
-    return struct.unpack("<" + size, struct.pack(">" + size, val))[0]
+        size = SIZE_REPRS[size]
+    return unpack("<" + size, pack(">" + size, val))[0]
 
-def endianu(value): return endian(fitu(value), BYTE)
+def endianu(value): return endian(fitu(value), BIT)
 def endianb(value): return endian(fitb(value), BYTE)
 def endianw(value): return endian(fitw(value), WORD)
 def endiand(value): return endian(fitd(value), DWORD)

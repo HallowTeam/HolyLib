@@ -15,7 +15,7 @@ sudo ln -s /Path/To/HolyPy /usr/lib/python2.7/site-packages/holypy
 
 Dependances:
 ============
-- pexpect : module exputils
+- module exputils: pexpect
 
 En cours:
 =========
