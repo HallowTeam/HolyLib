@@ -4,7 +4,6 @@
 from holypy.bin.formatstring import *
 from holypy.bin.exputils import *
 
-
 prog = spawn("./format")
 prog.expect("\r\n")
 func = int(prog.before, 16)
