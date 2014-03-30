@@ -13,6 +13,10 @@ Installation:
 =============
 sudo ln -s /Path/To/HolyPy /usr/lib/python2.7/site-packages/holypy
 
+Installation modules:
+=====================
+sudo python2 setup.py install
+
 Dependances:
 ============
 - module exputils: pexpect
